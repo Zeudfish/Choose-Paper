@@ -1,6 +1,6 @@
 # 🚀 Paper Review Agent
 
-拖拽 PDF / 输入 URL，一键生成严格的审稿反馈：摘要、优点、不足、追问，以及「阅读建议」高亮（精读 / 可选 / 可忽略）。中英界面切换，支持 OpenAI/DeepSeek 等兼容模型。
+拖拽 PDF / 输入 URL，一键生成阅读建议。
 
 > [!NOTE]
 > 默认使用 OpenAI 兼容接口，请自行配置 API Key / Base URL。
