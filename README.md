@@ -22,7 +22,7 @@ Choose Paper —— 让你不再浪费时间。
 https://github.com/user-attachments/assets/placeholder-demo.gif
 
 ## ✨ 主要特性
-🤖 **一键给出阅读建议**：拖拽 PDF/TXT 或粘贴论文 URL，自动提取文本并调用 LLM并给出阅读建议-------经作者实测，gpt5.1效果较好，和我自己的阅读感受较为接近。   
+🤖 **一键给出阅读建议**：拖拽 PDF/TXT 或粘贴论文 URL，自动提取文本并调用 LLM并给出阅读建议-------经作者实测，gpt5.1效果较好，和真实的阅读感受较为接近。   
 🛠️ **CLI + Web**：命令行和网页双入口，基于 OpenAI 兼容 API。
 
 ## 🖥️ Web 端快速开始
@@ -55,4 +55,4 @@ cat examples/paper.txt | python review_agent.py --paper - --domain CV --language
 - Docker 镜像与一键脚本
 
 ## 🤝 贡献 & Star
-欢迎 Issue / PR / Star！。
+欢迎 Issue / PR / Star！
