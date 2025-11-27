@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Paper Review Agent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: radial-gradient(circle at 20% 20%, #111827, #0b0f1a 50%, #05070d);
+      --card: rgba(255, 255, 255, 0.04);
+      --accent: #7dd3fc;
+      --accent-strong: #38bdf8;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: rgba(255, 255, 255, 0.08);
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Space Grotesk', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 24px 64px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0.2px;
+    }
+    .tag {
+      padding: 6px 12px;
+      border-radius: 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .lang-toggle {
+      padding: 8px 12px;
+      border-radius: 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 13px;
+      cursor: pointer;
+      transition: border 0.2s ease, color 0.2s ease;
+    }
+    .lang-toggle:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+    .view-switch {
+      display: flex;
+      gap: 10px;
+      margin: 12px 0 4px;
+    }
+    .tab-btn {
+      padding: 9px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      cursor: pointer;
+      font-weight: 600;
+      transition: border 0.2s ease, color 0.2s ease, background 0.2s ease;
+    }
+    .tab-btn.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(125, 211, 252, 0.07);
+    }
+    .hidden { display: none; }
+    .card h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      letter-spacing: 0.2px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(17, 24, 39, 0.7);
+      color: #e5e7eb;
+      font-size: 14px;
+      outline: none;
+      transition: border 0.2s ease, transform 0.1s ease, background 0.2s ease;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+      background: rgba(17, 24, 39, 0.9);
+      transform: translateY(-1px);
+    }
+    select option {
+      background: #0b1020;
+      color: #e5e7eb;
+    }
+    textarea { resize: vertical; min-height: 70px; }
+    .row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .row.single { grid-template-columns: 1fr; }
+    .dropzone {
+      border: 1.5px dashed var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      text-align: center;
+      color: var(--muted);
+      cursor: pointer;
+      transition: border 0.2s ease, background 0.2s ease;
+    }
+    .dropzone.active {
+      border-color: var(--accent);
+      background: rgba(125, 211, 252, 0.07);
+      color: var(--accent);
+    }
+    .btn {
+      width: 100%;
+      margin-top: 10px;
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(120deg, var(--accent-strong), #60a5fa);
+      color: #0b0f1a;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      box-shadow: 0 12px 30px rgba(96, 165, 250, 0.35);
+      transition: transform 0.1s ease;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .status {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(125, 211, 252, 0.12);
+      color: var(--accent);
+      font-size: 12px;
+      margin-right: 6px;
+      margin-bottom: 6px;
+    }
+    .pill.good {
+      background: rgba(16, 185, 129, 0.18);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .pill.mid {
+      background: rgba(234, 179, 8, 0.18);
+      color: #facc15;
+      border: 1px solid rgba(234, 179, 8, 0.3);
+    }
+    .pill.bad {
+      background: rgba(248, 113, 113, 0.18);
+      color: #f87171;
+      border: 1px solid rgba(248, 113, 113, 0.3);
+    }
+    .list {
+      margin: 6px 0 0;
+      padding-left: 16px;
+      color: var(--text);
+    }
+    pre {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 60vh;
+      overflow: auto;
+    }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="header">
+      <div>
+        <h1 id="title-text">Paper Review Agent</h1>
+        <div class="tag" id="tagline">拖拽 PDF / 输入 URL，选择模型，一键生成阅读建议</div>
+      </div>
+      <button class="lang-toggle" id="lang-toggle" type="button">EN</button>
+    </div>
+
+    <div class="view-switch">
+      <button class="tab-btn active" id="tab-request" type="button">填写请求</button>
+      <button class="tab-btn" id="tab-result" type="button">查看结果</button>
+    </div>
+
+    <div class="layout">
+      <div class="card" id="request-panel">
+        <h2 id="request-title">提交论文</h2>
+        <form id="review-form">
+          <div class="dropzone" id="dropzone">
+            <input type="file" id="file-input" name="file" accept=".pdf,.txt" style="display:none" />
+            <strong id="dropzone-text">拖拽 PDF 或 TXT 到这里，或点击选择</strong>
+            <div id="file-name" style="margin-top:6px;color:var(--muted);font-size:13px;">未选择文件</div>
+          </div>
+
+          <div class="row single" style="margin-top:12px;">
+            <div>
+              <label for="paper_url" id="paper-url-label">论文 URL（可选，若有文件则优先文件）</label>
+              <input type="url" id="paper_url" name="paper_url" placeholder="https://example.com/paper.pdf" />
+            </div>
+          </div>
+
+          <div class="row single" style="margin-top:12px;">
+            <div>
+              <label for="domain" id="domain-label">领域</label>
+              <select id="domain" name="domain">
+                <option value="CV">CV</option>
+                <option value="ML" selected>ML</option>
+                <option value="NLP">NLP</option>
+              </select>
+            </div>
+          </div>
+          <input type="hidden" id="language" name="language" value="zh" />
+
+          <div class="row">
+            <div>
+              <label for="model" id="model-label">模型选择</label>
+              <select id="model" name="model">
+                <option value="gpt-4o-mini" data-baseurl="https://api.openai.com/v1">OpenAI · gpt-4o-mini</option>
+                <option value="gpt-4.1" data-baseurl="https://api.openai.com/v1">OpenAI · gpt-4.1</option>
+                <option value="deepseek-chat" data-baseurl="https://api.deepseek.com">DeepSeek · deepseek-chat</option>
+                <option value="deepseek-reasoner" data-baseurl="https://api.deepseek.com">DeepSeek · deepseek-reasoner</option>
+              </select>
+            </div>
+            <div>
+              <label for="temperature" id="temp-label">Temperature</label>
+              <input type="number" id="temperature" name="temperature" min="0" max="1" step="0.1" value="0.2" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label for="base_url" id="base-url-label">Base URL（OpenAI 兼容）</label>
+              <input type="text" id="base_url" name="base_url" placeholder="https://api.deepseek.com" />
+            </div>
+            <div>
+              <label for="api_key" id="api-key-label">API Key</label>
+              <input type="password" id="api_key" name="api_key" placeholder="必填" required />
+            </div>
+          </div>
+
+          <button class="btn" type="submit" id="submit-btn">生成审稿</button>
+          <div class="status" id="status">等待提交</div>
+        </form>
+      </div>
+
+      <div class="card hidden" id="result-panel">
+        <h2 id="results-title">阅读建议</h2>
+        <div id="results" class="card" style="background:rgba(255,255,255,0.02);border-color:var(--border);">
+          <div class="pill" id="result-pill" style="margin-bottom:6px;">输出</div>
+          <pre id="review-text" aria-label="review-text">等待输出...</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('file-input');
+    const fileName = document.getElementById('file-name');
+    const form = document.getElementById('review-form');
+    const statusEl = document.getElementById('status');
+    const resultsEl = document.getElementById('results');
+    const reviewTextEl = document.getElementById('review-text');
+    const resultPill = document.getElementById('result-pill');
+    const modelSelect = document.getElementById('model');
+    const baseUrlInput = document.getElementById('base_url');
+    const langToggle = document.getElementById('lang-toggle');
+    const languageInput = document.getElementById('language');
+    const titleText = document.getElementById('title-text');
+    const tagline = document.getElementById('tagline');
+    const requestTitle = document.getElementById('request-title');
+    const dropzoneText = document.getElementById('dropzone-text');
+    const paperUrlLabel = document.getElementById('paper-url-label');
+    const domainLabel = document.getElementById('domain-label');
+    const modelLabel = document.getElementById('model-label');
+    const tempLabel = document.getElementById('temp-label');
+    const baseUrlLabel = document.getElementById('base-url-label');
+    const apiKeyLabel = document.getElementById('api-key-label');
+    const apiKeyInput = document.getElementById('api_key');
+    const submitBtn = document.getElementById('submit-btn');
+    const resultsTitle = document.getElementById('results-title');
+    const tabRequest = document.getElementById('tab-request');
+    const tabResult = document.getElementById('tab-result');
+    const requestPanel = document.getElementById('request-panel');
+    const resultPanel = document.getElementById('result-panel');
+
+    // 根据模型选项填充 base_url
+    function syncBaseUrl() {
+      const opt = modelSelect.options[modelSelect.selectedIndex];
+      const baseurl = opt.getAttribute('data-baseurl') || '';
+      if (baseurl) baseUrlInput.value = baseurl;
+    }
+    syncBaseUrl();
+    modelSelect.addEventListener('change', syncBaseUrl);
+
+    // 语言文案
+    const i18n = {
+      zh: {
+        title: 'Choose Paper',
+        tagline: '拖拽 PDF / 输入 URL，选择模型，一键生成阅读建议',
+        requestTitle: '提交论文',
+        dropzone: '拖拽 PDF 或 TXT 到这里，或点击选择',
+        fileNone: '未选择文件',
+        paperUrlLabel: '论文 URL（可选，若有文件则优先文件）',
+        paperUrlPlaceholder: 'https://example.com/paper.pdf',
+        domainLabel: '领域',
+        modelLabel: '模型选择',
+        tempLabel: '温度 (Temperature)',
+        baseUrlLabel: 'Base URL（OpenAI 兼容）',
+        apiKeyLabel: 'API Key',
+        apiKeyPlaceholder: '必填',
+        submit: '生成审稿',
+        statusIdle: '等待提交',
+        statusWorking: '调用模型中...',
+        statusDone: '完成',
+        statusErrorPrefix: '错误：',
+        resultsTitle: '阅读建议',
+        outputPill: '输出',
+        waiting: '等待输出...',
+        metaFormat: '模型: {model} | 域: {domain} | 语言: {language}',
+        failurePill: '调用失败',
+        noData: '暂无数据',
+        toggleLabel: 'EN',
+      },
+      en: {
+        title: 'Choose Paper',
+        tagline: 'Drop a PDF / paste URL, pick a model, get the suggestion',
+        requestTitle: 'Submit Paper',
+        dropzone: 'Drag a PDF or TXT here, or click to choose',
+        fileNone: 'No file chosen',
+        paperUrlLabel: 'Paper URL (optional; file takes priority)',
+        paperUrlPlaceholder: 'https://example.com/paper.pdf',
+        domainLabel: 'Domain',
+        modelLabel: 'Model',
+        tempLabel: 'Temperature',
+        baseUrlLabel: 'Base URL (OpenAI-compatible)',
+        apiKeyLabel: 'API Key',
+        apiKeyPlaceholder: 'Required',
+        submit: 'Generate Review',
+        statusIdle: 'Idle',
+        statusWorking: 'Calling model...',
+        statusDone: 'Done',
+        statusErrorPrefix: 'Error: ',
+        resultsTitle: 'Review',
+        outputPill: 'Output',
+        waiting: 'Waiting for output...',
+        metaFormat: 'Model: {model} | Domain: {domain} | Language: {language}',
+        failurePill: 'Failed',
+        noData: 'No data',
+        toggleLabel: '中',
+      },
+    };
+    let currentLang = 'zh';
+    let statusTextCache = '';
+
+    function applyLang(lang) {
+      currentLang = lang;
+      languageInput.value = lang;
+      document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+      const t = i18n[lang];
+      titleText.textContent = t.title;
+      tagline.textContent = t.tagline;
+      requestTitle.textContent = t.requestTitle;
+      dropzoneText.textContent = t.dropzone;
+      if (!fileInput.files.length) fileName.textContent = t.fileNone;
+      paperUrlLabel.textContent = t.paperUrlLabel;
+      document.getElementById('paper_url').placeholder = t.paperUrlPlaceholder;
+      domainLabel.textContent = t.domainLabel;
+      modelLabel.textContent = t.modelLabel;
+      tempLabel.textContent = t.tempLabel;
+      baseUrlLabel.textContent = t.baseUrlLabel;
+      apiKeyLabel.textContent = t.apiKeyLabel;
+      apiKeyInput.placeholder = t.apiKeyPlaceholder;
+      submitBtn.textContent = t.submit;
+      statusTextCache = statusTextCache || t.statusIdle;
+      statusEl.textContent = statusTextCache;
+      resultsTitle.textContent = t.resultsTitle;
+      resultPill.textContent = t.outputPill;
+      if (reviewTextEl.textContent.trim() === '' || reviewTextEl.textContent === i18n.zh.waiting || reviewTextEl.textContent === i18n.en.waiting) {
+        reviewTextEl.textContent = t.waiting;
+      }
+      langToggle.textContent = t.toggleLabel;
+    }
+    applyLang(currentLang);
+
+    langToggle.addEventListener('click', () => {
+      const next = currentLang === 'zh' ? 'en' : 'zh';
+      applyLang(next);
+    });
+
+    function showPanel(which) {
+      if (which === 'request') {
+        requestPanel.classList.remove('hidden');
+        resultPanel.classList.add('hidden');
+        tabRequest.classList.add('active');
+        tabResult.classList.remove('active');
+      } else {
+        requestPanel.classList.add('hidden');
+        resultPanel.classList.remove('hidden');
+        tabRequest.classList.remove('active');
+        tabResult.classList.add('active');
+      }
+    }
+    tabRequest.addEventListener('click', () => showPanel('request'));
+    tabResult.addEventListener('click', () => showPanel('result'));
+
+    dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('active');
+    });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('active'));
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('active');
+      if (e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        fileName.textContent = e.dataTransfer.files[0].name;
+      }
+    });
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) {
+        fileName.textContent = e.target.files[0].name;
+      }
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const t = i18n[currentLang];
+      statusEl.textContent = t.statusWorking;
+      statusTextCache = t.statusWorking;
+      const fd = new FormData();
+
+      const file = fileInput.files[0];
+      if (file) fd.append('file', file);
+
+      fd.append('paper_url', document.getElementById('paper_url').value);
+      fd.append('domain', document.getElementById('domain').value);
+      fd.append('language', languageInput.value);
+      fd.append('model', document.getElementById('model').value);
+      fd.append('temperature', document.getElementById('temperature').value || '0.2');
+      fd.append('base_url', document.getElementById('base_url').value);
+      fd.append('api_key', document.getElementById('api_key').value);
+
+      try {
+        const res = await fetch('/review', { method: 'POST', body: fd });
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(errText || '请求失败');
+        }
+        const data = await res.json();
+        renderReviewText(data.review_text, data.meta);
+        statusEl.textContent = t.statusDone;
+        statusTextCache = t.statusDone;
+        showPanel('result');
+      } catch (err) {
+        const t = i18n[currentLang];
+        statusEl.textContent = t.statusErrorPrefix + (err.message || '');
+        statusTextCache = statusEl.textContent;
+        resultPill.textContent = t.failurePill;
+        reviewTextEl.textContent = err.message || t.failurePill;
+      }
+    });
+
+    function renderReviewText(text, meta) {
+      if (!text) {
+        reviewTextEl.textContent = i18n[currentLang].noData;
+        return;
+      }
+      // 去掉模板中的决策说明，只展示具体阅读建议
+      const cleanedText = text
+        .replace(/\(阅读建议:\s*精读\s*\/\s*可选浏览\s*\/\s*可忽略\)/gi, '')
+        .replace(/\(Reading suggestion:\s*Must Read\s*\/\s*Skim Optional\s*\/\s*Skip\)/gi, '');
+      const t = i18n[currentLang];
+      const metaInfo = meta
+        ? t.metaFormat
+            .replace('{model}', meta.model || '-')
+            .replace('{domain}', meta.domain || '-')
+            .replace('{language}', meta.language || '-')
+        : '';
+      if (metaInfo) {
+        resultPill.textContent = metaInfo;
+      }
+
+      // 解析 Decision 行，给结果加颜色
+      const match = cleanedText.match(/Decision[:：]\s*(.*)/i);
+      if (match && match[1]) {
+        const decisionText = match[1].trim();
+        const low = /(可忽略|无需阅读|跳过|skip|ignore|not worth)/i;
+        const mid = /(可选|浏览|可看可不看|skim|optional|consider)/i;
+        const high = /(精读|建议阅读|必须|推荐|must|recommend)/i;
+        resultPill.classList.remove('good', 'mid', 'bad');
+        if (high.test(decisionText)) {
+          resultPill.classList.add('good');
+        } else if (mid.test(decisionText)) {
+          resultPill.classList.add('mid');
+        } else if (low.test(decisionText)) {
+          resultPill.classList.add('bad');
+        }
+        const label = currentLang === 'zh' ? '阅读建议：' : 'Reading suggestion: ';
+        resultPill.textContent = label + decisionText;
+      } else if (metaInfo) {
+        resultPill.classList.remove('good', 'mid', 'bad');
+        resultPill.textContent = metaInfo;
+      }
+
+      reviewTextEl.textContent = cleanedText;
+    }
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>
